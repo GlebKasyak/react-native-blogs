@@ -1,7 +1,6 @@
-import React, { useEffect, useCallback } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React, { FC, useCallback, useEffect } from "react";
+import { observer, inject } from "mobx-react";
 import { HeaderButtons, Item } from "react-navigation-header-buttons";
-import { NavigationStackScreenProps } from "react-navigation-stack";
 import { View, StyleSheet, Image, Button, ScrollView, Alert } from "react-native";
 
 import { AppHeaderIcon, AppText } from "../components/atoms";
@@ -10,18 +9,26 @@ import { Colors } from "../../assets/styles";
 import { NavigationStackProps } from "../interfaces/common";
 import { NavigationConstants } from "../navigation/navigationConfig";
 
-import { removePost, togglePost } from "../store/actions/post.action";
-import { PostSelectors } from "../store/selectors";
-import { AppStateType } from "../store/reducers";
+import { PostType } from "../interfaces/post";
+import { StoreType } from "../store";
 
-type Props = NavigationStackScreenProps;
+type Props = {
+    getPost: (postId: string) => PostType
+    removePost: (postId: string) => Promise<void>,
+    togglePost: (post: PostType) => Promise<void>,
+    getBookedPost: (postId: string) => PostType
+};
 
-
-const PostScreen: NavigationStackProps<Props> = ({ navigation }) => {
-    const dispatch = useDispatch();
-
+const PostScreen: NavigationStackProps<Props> = (
+    {
+        navigation,
+        getPost,
+        removePost,
+        togglePost,
+        getBookedPost
+    }) => {
     const postId = navigation.getParam("postId");
-    const post = useSelector((state: AppStateType) => PostSelectors.getPostById(state, postId))!;
+    const post = getPost(postId);
 
     const removeHandler = () => {
         Alert.alert(
@@ -36,7 +43,7 @@ const PostScreen: NavigationStackProps<Props> = ({ navigation }) => {
                     text: "Удалить", style: "destructive",
                     onPress() {
                         navigation.navigate(NavigationConstants.MAIN);
-                        dispatch(removePost(postId))
+                        removePost(postId)
                     }
                 }
             ],
@@ -45,20 +52,16 @@ const PostScreen: NavigationStackProps<Props> = ({ navigation }) => {
     };
 
     const toggleHandler = useCallback(() => {
-        dispatch(togglePost(post));
-    }, [dispatch, post]);
-
-    const booked = useSelector((state: AppStateType) =>
-        PostSelectors.getBookedPost(state, postId)
-    );
+        togglePost(post);
+    }, [post]);
 
     useEffect(() => {
         navigation.setParams({ toggleHandler })
     }, [toggleHandler]);
 
     useEffect(() => {
-        navigation.setParams({ booked })
-    }, [booked]);
+        navigation.setParams({ booked: getBookedPost(postId) })
+    }, [getBookedPost(postId)]);
 
     if(!post) {
         return null
@@ -83,7 +86,7 @@ PostScreen.navigationOptions = ({ navigation }) => {
     const date = navigation.getParam("date");
     const booked = navigation.getParam("booked");
     const toggleHandler = navigation.getParam("toggleHandler");
-
+    console.log(booked)
     const iconName = booked ? "ios-star" : "ios-star-outline";
 
     return {
@@ -113,4 +116,9 @@ const styles = StyleSheet.create({
     }
 })
 
-export default PostScreen;
+export default inject<StoreType, {}, Props, {}>(({ rootStore }) => ({
+    getPost: rootStore.getPost,
+    removePost: rootStore.removePost,
+    togglePost: rootStore.togglePost,
+    getBookedPost: rootStore.getBookedPost,
+}))(observer(PostScreen) as unknown as FC);

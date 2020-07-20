@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import { Provider } from "react-redux";
+import { Provider } from "mobx-react"
+import "mobx-react-lite/batchingForReactDom";
 import { AppLoading } from "expo";
 
 import AppNavigation from "./src/navigation/AppNavigation";
 import bootstrap from "./src/shared/bootstrap";
 
-import store from "./src/store";
+import rootStore from "./src/store";
 
 export default function App() {
   const [isReady, setIsReady] = useState(false);
@@ -19,7 +20,7 @@ export default function App() {
   }
 
   return (
-      <Provider store={ store } >
+      <Provider rootStore={ rootStore } >
         <AppNavigation/>
       </Provider>
   );

@@ -1,8 +1,7 @@
-import React, { useState, useRef } from "react";
-import { useDispatch } from "react-redux";
-import { NavigationStackScreenProps } from "react-navigation-stack";
+import React, {useState, useRef, FC} from "react";
+import { observer, inject } from "mobx-react";
 import { HeaderButtons, Item } from "react-navigation-header-buttons";
-import { View, Text, StyleSheet, TextInput, Image, Button, ScrollView, TouchableWithoutFeedback, Keyboard } from "react-native";
+import { View, Text, StyleSheet, TextInput, Button, ScrollView, TouchableWithoutFeedback, Keyboard } from "react-native";
 
 import { AppHeaderIcon } from "../components/atoms";
 import { PhotoPicker } from "../components/moleculs";
@@ -10,14 +9,16 @@ import { PhotoPicker } from "../components/moleculs";
 import { Colors } from "../../assets/styles";
 import { Fonts } from "../../assets/fonts";
 import { NavigationStackProps } from "../interfaces/common";
+import { PostType } from "../interfaces/post";
 import { NavigationConstants } from "../navigation/navigationConfig";
 
-import { addPost } from "../store/actions/post.action";
+import { StoreType } from "../store";
 
-type Props = NavigationStackScreenProps;
+type Props = {
+    addPost: (post: PostType) => Promise<void>
+};
 
-const CreateScreen: NavigationStackProps<Props> = ({ navigation }) => {
-    const dispatch = useDispatch();
+const CreateScreen: NavigationStackProps<Props> = ({ navigation , addPost}) => {
     const imgRef = useRef<string>();
 
     const [text, setText] = useState("");
@@ -30,7 +31,7 @@ const CreateScreen: NavigationStackProps<Props> = ({ navigation }) => {
             booked: false
         };
 
-        dispatch(addPost(post));
+        addPost(post);
         navigation.navigate(NavigationConstants.MAIN);
     };
 
@@ -98,4 +99,6 @@ const styles = StyleSheet.create({
     }
 });
 
-export default CreateScreen;
+export default inject<StoreType, {}, Props, {}>(({ rootStore }) => ({
+    addPost: rootStore.addPost,
+}))(observer(CreateScreen) as unknown as FC);

@@ -1,8 +1,7 @@
-import React, { useEffect } from "react";
+import React, { useEffect, FC } from "react";
 import { View, StyleSheet, ActivityIndicator } from "react-native";
-import { useDispatch, useSelector } from "react-redux";
+import { observer, inject } from "mobx-react";
 import { HeaderButtons, Item } from "react-navigation-header-buttons";
-import { NavigationStackScreenProps } from "react-navigation-stack";
 
 import { PostList } from "../components/moleculs";
 import { AppHeaderIcon } from "../components/atoms";
@@ -11,26 +10,23 @@ import { NavigationStackProps } from "../interfaces/common";
 import { NavigationConstants } from "../navigation/navigationConfig";
 import { PostType } from "../interfaces/post";
 import { Classes, Colors } from "../../assets/styles";
-
-import { loadPosts } from "../store/actions/post.action"
-import { PostSelectors } from "../store/selectors"
-import { AppStateType } from "../store/reducers"
+import { StoreType } from "../store";
 
 
-type Props = NavigationStackScreenProps;
+type Props = {
+    isLoading: boolean,
+    allPosts: Array<PostType>,
+    loadPosts: () => void
+};
 
-const MainScreen: NavigationStackProps<Props> = ({ navigation }) => {
-    const dispatch = useDispatch();
-    const allPosts = useSelector((state: AppStateType) => PostSelectors.getAllPosts(state));
-    const isLoading = useSelector((state: AppStateType) => PostSelectors.getIsLoading(state));
-
+const MainScreen: NavigationStackProps<Props> = ({ navigation, isLoading, allPosts, loadPosts }) => {
     const openPostHandler = ({ id, date, booked }: PostType) => {
         navigation.navigate(NavigationConstants.POST, { postId: id, date, booked });
     };
 
     useEffect(() => {
-        dispatch(loadPosts());
-    }, [dispatch])
+        loadPosts();
+    }, [])
 
     if(isLoading) {
         return (
@@ -72,4 +68,8 @@ const styles = StyleSheet.create({
     center: Classes.CENTER
 });
 
-export default MainScreen;
+export default inject<StoreType, {}, Props, {}>(({ rootStore }) => ({
+    isLoading: rootStore.isLoading,
+    allPosts: rootStore.allPosts,
+    loadPosts: rootStore.loadPosts,
+}))(observer(MainScreen) as unknown as FC);

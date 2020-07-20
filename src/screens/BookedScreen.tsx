@@ -1,7 +1,6 @@
-import React from "react";
-import { useSelector } from "react-redux";
+import React, { FC } from "react";
+import { observer, inject } from "mobx-react";
 import { HeaderButtons, Item } from "react-navigation-header-buttons";
-import { NavigationStackScreenProps } from "react-navigation-stack";
 
 import { PostList } from "../components/moleculs";
 import { AppHeaderIcon } from "../components/atoms";
@@ -10,14 +9,13 @@ import { NavigationStackProps } from "../interfaces/common";
 import { NavigationConstants } from "../navigation/navigationConfig";
 import { PostType } from "../interfaces/post";
 
-import { PostSelectors } from "../store/selectors"
-import { AppStateType } from "../store/reducers"
+import { StoreType } from "../store";
 
-type Props = NavigationStackScreenProps;
+type Props = {
+    bookedPosts: Array<PostType>
+};
 
-const BookedScreen: NavigationStackProps<Props> = ({ navigation }) => {
-    const bookedPosts = useSelector((state: AppStateType) => PostSelectors.getBookedPosts(state));
-
+const BookedScreen: NavigationStackProps<Props> = ({ navigation, bookedPosts }) => {
     const openPostHandler = ({ id, date, booked }: PostType) => {
         navigation.navigate(NavigationConstants.POST, { postId: id, date, booked });
     };
@@ -39,4 +37,6 @@ BookedScreen.navigationOptions = ({ navigation }) => ({
     )
 });
 
-export default BookedScreen;
+export default inject<StoreType, {}, Props, {}>(({ rootStore }) => ({
+    bookedPosts: rootStore.bookedPosts,
+}))(observer(BookedScreen) as unknown as FC);
